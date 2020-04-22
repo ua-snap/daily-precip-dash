@@ -1,0 +1,64 @@
+@import url('https://fonts.googleapis.com/css?family=Open+Sans:400,700&subset=latin-ext');
+@import url('https://fonts.googleapis.com/css?family=Cardo:400,400i,700&subset=latin-ext');
+
+html, body {
+	font-family: 'Cardo';
+}
+
+h1, h2, h3, h4, h5, h6 {
+	font-family: 'Open Sans';
+}
+
+nav.navbar {
+	border-bottom: 1px solid #eee;
+}
+
+nav .navbar-brand img {
+	max-height: 3rem;
+	height: 3rem;
+}
+
+.camera-icon span {
+	display: inline-block;
+	position: relative;
+	top: 0.25rem;
+	padding: 0 3px;
+}
+.camera-icon span path {
+	fill: #ccc;
+}
+
+.dropdown-selector {
+	max-width: 15rem;
+}
+
+.section.graph {
+	border-bottom: 1px solid #eee;
+}
+
+/* Fix heights of charts */
+#precip-scatter {
+	height: 600px;
+}
+#precip-bubble {
+	height: 1200px;
+}
+
+.footer {
+    box-shadow: inset 0 7px 9px -7px rgba(0,0,0,0.4);
+}
+
+.footer a {
+	display: inline-block;
+	margin: 1rem 1.5rem 2rem;
+}
+
+.footer img {
+	height: 4em;
+	max-height: 4em;
+}
+
+.footer img.snap {
+	display: relative;
+	bottom: 2rem;
+}
