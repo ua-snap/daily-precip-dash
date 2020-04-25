@@ -21,7 +21,11 @@ pipenv run flask run
 
 The project is run through Flask and will be available at [http://localhost:5000](http://localhost:5000).
 
-Example data is in the `data/` directory.
+Other env vars that can be set:
+
+ * `DASH_LOG_LEVEL` - sets level of logger, default INFO
+ * `ACIS_API_URL` - Has sane default (https://data.rcc-acis.org/StnData?)
+ * `DASH_CACHE_EXPIRE` - Has sane default (1 day), override if testing cache behavior.
 
 ## Deploying to AWS Elastic Beanstalk:
 

@@ -9,6 +9,10 @@ h1, h2, h3, h4, h5, h6 {
 	font-family: 'Open Sans';
 }
 
+input[type="radio"] {
+	margin-right: 0.5rem;
+}
+
 nav.navbar {
 	border-bottom: 1px solid #eee;
 }
@@ -40,8 +44,8 @@ nav .navbar-brand img {
 #precip-scatter {
 	height: 600px;
 }
-#precip-bubble {
-	height: 1200px;
+#precip-box {
+	height: 600px;
 }
 
 .footer {

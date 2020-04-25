@@ -14,35 +14,6 @@ import data
 # For hosting
 path_prefix = os.getenv("REQUESTS_PATHNAME_PREFIX") or "/"
 
-# Used to make the chart exports nice
-fig_download_configs = dict(
-    filename="Daily_Precipitation", width="1000", height="650", scale=2
-)
-fig_configs = dict(
-    displayModeBar=True,
-    showSendToCloud=False,
-    toImageButtonOptions=fig_download_configs,
-    modeBarButtonsToRemove=[
-        "zoom2d",
-        "pan2d",
-        "select2d",
-        "lasso2d",
-        "zoomIn2d",
-        "zoomOut2d",
-        "autoScale2d",
-        "resetScale2d",
-        "hoverClosestCartesian",
-        "hoverCompareCartesian",
-        "hoverClosestPie",
-        "hoverClosest3d",
-        "hoverClosestGl2d",
-        "hoverClosestGeo",
-        "toggleHover",
-        "toggleSpikelines",
-    ],
-    displaylogo=False,
-)
-
 
 # Helper functions
 def wrap_in_section(content, section_classes="", container_classes="", div_classes=""):
@@ -72,7 +43,7 @@ header = ddsih.DangerouslySetInnerHTML(
 
   <div class="navbar-brand">
     <a class="navbar-item" href="https://www.snap.uaf.edu">
-      <img src="{path_prefix}assets/SNAP_acronym_color_square.svg">
+      <img src="{path_prefix}assets/SNAP_mapventures_header.svg">
     </a>
 
     <a role="button" class="navbar-burger burger" aria-label="menu" aria-expanded="false" data-target="navbarBasicExample">
@@ -119,6 +90,20 @@ communities_dropdown_field = html.Div(
     ],
 )
 
+radios = dcc.RadioItems(
+    labelClassName="radio",
+    id="precip_type",
+    className="control",
+    options=[
+        {"label": name, "value": value} for value, name in luts.precip_types.items()
+    ],
+    value="pcpt",
+)
+radios_field = html.Div(
+    className="field",
+    children=[html.Label("Precipitation or snow?", className="label"), radios],
+)
+
 about = wrap_in_section(
     [
         ddsih.DangerouslySetInnerHTML(
@@ -132,41 +117,66 @@ about = wrap_in_section(
 <p>Get started by choosing a community.</p>
             """
         ),
-        communities_dropdown_field
+        communities_dropdown_field,
+        radios_field,
     ],
     div_classes="content is-size-5",
 )
 
 
-
-
 # Daily Precip as a scatterplot + mean line
 scatter_graph = wrap_in_section(
     [
-        html.H3("Daily precipitation", className="title is-4"),
+        html.H3("Average daily precipitation", className="title is-4"),
         html.P(
             """
-Placeholder
+Each dot in this chart shows the average recorded precipitation for that day.  Because each day shows an average, this chart doesn't show extreme events.
     """,
             className="content is-size-5",
         ),
-        dcc.Graph(id="precip-scatter", config=fig_configs),
+        dcc.Graph(id="precip-scatter", config=luts.fig_configs),
     ],
     section_classes="graph",
 )
 
+
+# Daily Precip as a scatterplot + mean line
+box_graph = wrap_in_section(
+    [
+        html.H3("Average daily precipitation per month", className="title is-4"),
+        dcc.Markdown(
+            """
+This chart shows average daily precipitation for each month.
+
+ * **Boxes** show the middle 50&percnt; of daily averages.
+ * **Horizontal lines within boxes** show averages based on all reports for a month.
+ * **Whiskers** (vertical lines above and below boxes) represent the full ranges of typical variation of daily averages, extended to the minimum and maximum points contained within 1.5 of the interquartile range (IQR, which is the height of the box shown).
+ * **Dots** indicate outliers, or individual values outside the normal variation (1.5 IQR).
+
+    """,
+            className="content is-size-5",
+        ),
+        dcc.Graph(id="precip-box", config=luts.fig_configs),
+    ],
+    section_classes="graph",
+)
+
+
 # Daily precip as a daily bubble chart
 bubble_graph = wrap_in_section(
     [
-        html.H3("Daily precipitation TBD Title What", className="title is-4"),
-        html.P(
+        html.H3("Daily precipitation", className="title is-4"),
+        dcc.Markdown(
             """
-TBD Placeholder
+This visualization shows recorded precipitation for each day with &gt;0.10 inches of precipitation.  The size of each circle corresponds to the amount of precipitation, with larger circles showing greater precipitation for that day.
+
+This chart can be used to see extreme events throughout the historical record.
 """,
             className="content is-size-5",
         ),
         html.Div(
-            className="graph", children=[dcc.Graph(id="precip-bubble", config=fig_configs)]
+            className="graph",
+            children=[dcc.Graph(id="precip-bubble", config=luts.fig_configs)],
         ),
     ],
     section_classes="graph",
@@ -198,4 +208,6 @@ footer = html.Footer(
     ],
 )
 
-layout = html.Div(children=[header, about, scatter_graph, bubble_graph, footer])
+layout = html.Div(
+    children=[header, about, scatter_graph, box_graph, bubble_graph, footer]
+)
