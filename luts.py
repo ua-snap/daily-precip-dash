@@ -1,62 +1,122 @@
 # pylint: disable=C0103
 """
-Common shared text strings and lookup tables.
+Common shared text strings, formatting defaults and lookup tables.
 """
 
-from datetime import date
+import os
+from datetime import datetime
 import pandas as pd
+import plotly.io as pio
 
+# Core page components
 title = "Alaska Community Daily Precipitation"
 url = "http://snap.uaf.edu/tools/demo"
 preview = "http://snap.uaf.edu/tools/demo/assets/preview.png"
 description = "This app lets you explore historical precipitation for places in Alaska."
+gtag_id = os.getenv("GTAG_ID", default="")
+index_string = f"""
+<!DOCTYPE html>
+<html>
+    <head>
+        <!-- Global site tag (gtag.js) - Google Analytics -->
+        <script async src="https://www.googletagmanager.com/gtag/js?id={gtag_id}"></script>
+        <script>
+          window.dataLayer = window.dataLayer || [];
+          function gtag(){{dataLayer.push(arguments);}}
+          gtag('js', new Date());
 
-communities = pd.read_csv("data/stations.csv")
+          gtag('config', '{gtag_id}');
+        </script>
+        {{%metas%}}
+        <title>{{%title%}}</title>
+        <meta charset="utf-8"/>
+        <meta name="viewport" content="width=device-width, initial-scale=1">
 
-def get_doy(month, day):
-    """ Return DOY from month/day """
-    return int(date(date.today().year, month, day).strftime("%j"))
+        <!-- Schema.org markup for Google+ -->
+        <meta itemprop="name" content="{title}">
+        <meta itemprop="description" content="{description}">
+        <meta itemprop="image" content="{preview}">
 
+        <!-- Twitter Card data -->
+        <meta name="twitter:card" content="summary_large_image">
+        <meta name="twitter:site" content="@SNAPandACCAP">
+        <meta name="twitter:title" content="{title}">
+        <meta name="twitter:description" content="{description}">
+        <meta name="twitter:creator" content="@SNAPandACCAP">
+        <!-- Twitter summary card with large image must be at least 280x150px -->
+        <meta name="twitter:image:src" content="{preview}">
 
-default_date_range = [get_doy(4, 1), get_doy(9, 16)]
+        <!-- Open Graph data -->
+        <meta property="og:title" content="{title}" />
+        <meta property="og:type" content="website" />
+        <meta property="og:url" content="{url}" />
+        <meta property="og:image" content="{preview}" />
+        <meta property="og:description" content="{description}" />
+        <meta property="og:site_name" content="{title}" />
 
-default_style = {"color": "rgba(0, 0, 0, 0.25)", "width": 1}
+        <link rel="alternate" hreflang="en" href="{url}" />
+        <link rel="canonical" href="{url}"/>
+        {{%favicon%}}
+        {{%css%}}
+    </head>
+    <body>
+        {{%app_entry%}}
+        <footer>
+            {{%config%}}
+            {{%scripts%}}
+            {{%renderer%}}
+        </footer>
+    </body>
+</html>
+"""
 
-important_years = [2004, 2005, 2009, 2010, 2013, 2015, 2019, 2020]
-years_lines_styles = {
-    "2004": {"color": "rgba(100, 143, 255, 1)", "width": "2"},
-    "2005": {"color": "rgba(120, 94, 240, 1)", "width": "2"},
-    "2006": default_style,
-    "2007": default_style,
-    "2008": default_style,
-    "2009": {"color": "rgba(220, 38, 127, 1)", "width": "2"},
-    "2010": {"color": "rgba(10, 128, 64, 1)", "width": "2"},
-    "2011": default_style,
-    "2012": default_style,
-    "2013": {"color": "rgba(254, 97, 0, 1)", "width": "2"},
-    "2014": default_style,
-    "2015": {"color": "rgba(255, 176, 0, 1)", "width": "2"},
-    "2016": default_style,
-    "2017": default_style,
-    "2018": default_style,
-    "2019": {"color": "rgba(10, 255, 128, 1)", "width": "2"},
-    "2020": {"color": "rgba(10, 25, 0, .85)", "width": "4"},
+# Other app values
+communities = pd.read_csv("data/stations.csv", index_col=False)
+precip_types = {"pcpt": "Precipitation", "snow": "Snowfall"}
+months = {}
+for i in range(1, 13):
+    months.update({i: datetime(2020, i, 1).strftime("%B")})
+
+# Plotly format template
+plotly_template = pio.templates["simple_white"]
+axis_configs = {
+    "automargin": True,
+    "showgrid": False,
+    "showline": False,
+    "ticks": "",
+    "title": {"standoff": 0},
+    "zeroline": False,
+    "fixedrange": True,
 }
+xaxis_config = {**axis_configs, **{"tickformat": "%B"}}
+plotly_template.layout.xaxis = xaxis_config
+plotly_template.layout.yaxis = axis_configs
 
-zones = {
-    "ALL": "Statewide",
-    "MID": "Military Zone",
-    "DAS": "Delta Area",
-    "FAS": "Fairbanks Area",
-    "MSS": "Mat-Su Area",
-    "CRS": "Copper River Area",
-    "UYD": "Upper Yukon Zone",
-    "KKS": "Kenai/Kodiak Area",
-    "SWS": "Southwest Area",
-    "CGF": "Chugach National Forest",
-    "GAD": "Galena Zone",
-    "TAS": "Tok Area",
-    "HNS": "Haines Area",
-    "TAD": "Tanana Zone",
-    "TNF": "Tongass National Forest",
-}
+# Used to make the chart exports nice
+fig_download_configs = dict(
+    filename="Daily_Precipitation", width="1000", height="650", scale=2
+)
+fig_configs = dict(
+    displayModeBar=True,
+    showSendToCloud=False,
+    toImageButtonOptions=fig_download_configs,
+    modeBarButtonsToRemove=[
+        "zoom2d",
+        "pan2d",
+        "select2d",
+        "lasso2d",
+        "zoomIn2d",
+        "zoomOut2d",
+        "autoScale2d",
+        "resetScale2d",
+        "hoverClosestCartesian",
+        "hoverCompareCartesian",
+        "hoverClosestPie",
+        "hoverClosest3d",
+        "hoverClosestGl2d",
+        "hoverClosestGeo",
+        "toggleHover",
+        "toggleSpikelines",
+    ],
+    displaylogo=False,
+)

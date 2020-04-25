@@ -31,21 +31,25 @@ def fetch_api_data(community):
     """
     Reads data from ACIS API for selected community.
     """
-    logging.info("Sending upstream data API request")
-    query = urllib.parse.urlencode(
-        {
-            "sid": community,
-            "sdate": "1950-01-01",
-            "edate": datetime.date.today().strftime("%Y-%m-%d"),
-            "elems": "4,10",  # precip & snow!
-            "output": "csv",
-        }
-    )
-    query = API_URL + query
-    logging.debug("API query string: %s", query)
-    std = pd.read_csv(
-        query, names=["date", "pcpt", "snow"], parse_dates=True, skiprows=1
-    )
+    if os.getenv("FLASK_DEBUG", default=False):
+        logging.info("Using debug mode & local data")
+        std = pd.read_csv("data/fairbanks.csv")
+    else:
+        logging.info("Sending upstream data API request")
+        query = urllib.parse.urlencode(
+            {
+                "sid": community,
+                "sdate": "1950-01-01",
+                "edate": datetime.date.today().strftime("%Y-%m-%d"),
+                "elems": "4,10",  # precip & snow!
+                "output": "csv",
+            }
+        )
+        query = API_URL + query
+        logging.debug("API query string: %s", query)
+        std = pd.read_csv(
+            query, names=["date", "pcpt", "snow"], parse_dates=True, skiprows=1
+        )
 
     # Drop missing, switch trace to 0, and assign column types
     std = std.loc[std["pcpt"] != "M"]  # drop missing
@@ -53,14 +57,15 @@ def fetch_api_data(community):
     std = std.replace("T", 0)  # make T (Trace) = 0
     std["pcpt"] = std["pcpt"].astype("float")
     std["snow"] = std["snow"].astype("float")
-
-    # Remove 0's.
-    std = std.loc[(std["pcpt"] > 0) | (std["snow"] > 0)]
-
     std["date"] = pd.to_datetime(std["date"])
-    std["doy"] = std["date"].apply(lambda d: d.strftime("%j")).astype("int")
+
+    # Split off some columns for easier grouping.
+    std["month"] = std["date"].apply(lambda d: d.strftime("%m")).astype("int")
     std["year"] = std["date"].apply(lambda d: d.strftime("%Y")).astype("int")
-    std["total"] = std["pcpt"] + std["snow"]
+
+    # Create a synthetic date field so we can stack
+    # data points nicely on the x-axis with Plotly.
+    std = std.assign(unified_year=std["date"].apply(lambda dt: dt.replace(year=2020)))
     return std
 
 
